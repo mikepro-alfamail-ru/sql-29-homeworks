@@ -1,5 +1,6 @@
 SET search_path TO public;
 
+-- Задание 1
 select 
 	distinct district 
 from 
@@ -8,7 +9,8 @@ where
 	district != ''
 order by 
 	district;
-	
+
+-- Задание 2
 select 
 	distinct district 
 from 
@@ -18,6 +20,7 @@ where
 order by 
 	district;
 	
+-- Задание 3
 select 
 	payment_id, payment_date, amount 
 from 
@@ -29,13 +32,14 @@ and
 order by 
 	payment_date;
 
-
+-- Задание 4
 select
 	payment_id, payment_date, amount 
 from 
 	payment
 limit 10;
 
+-- Задание 5
 select 
 	first_name||' '||last_name as "Фамилия и имя",
 	email as "Электронная почта",
@@ -44,6 +48,7 @@ select
 from 
 	customer;
 
+-- Задание 6
 select 
 	upper(last_name) as last_name, 
 	upper(first_name) as first_name
