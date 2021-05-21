@@ -58,6 +58,13 @@ select
 	payment_id, payment_date, amount 
 from 
 	payment
+order by 
+	payment_id desc
+/* 
+ * Можно сортировать по payment_date, но в таблице очень много записей
+ * с одинаковым значением в этом поле, так что на мой взгляд сортировать
+ * по payment_id правильней
+ */	
 limit 10;
 
 
