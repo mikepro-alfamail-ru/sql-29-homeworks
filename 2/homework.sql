@@ -90,3 +90,61 @@ from
 	customer
 where 
 	upper(first_name) = 'KELLY' or upper(first_name) = 'WILLIE';
+	
+
+--======== ДОПОЛНИТЕЛЬНАЯ ЧАСТЬ ==============
+
+--ЗАДАНИЕ №1
+--Выведите одним запросом информацию о фильмах, у которых рейтинг "R" 
+--и стоимость аренды указана от 0.00 до 3.00 включительно, 
+--а также фильмы c рейтингом "PG-13" и стоимостью аренды больше или равной 4.00.
+
+select 
+	title, description, rating, rental_rate 
+from 
+	film
+where 
+	(rating = 'R' and rental_rate between 0 and 3) or 
+	(rating = 'PG-13' and rental_rate >= 4);
+
+
+
+--ЗАДАНИЕ №2
+--Получите информацию о трёх фильмах с самым длинным описанием фильма.
+
+select 
+	title, description, rating, rental_rate 
+from 
+	film
+order by 
+	char_length(description) desc
+limit 3;
+
+
+
+--ЗАДАНИЕ №3
+-- Выведите Email каждого покупателя, разделив значение Email на 2 отдельных колонки:
+--в первой колонке должно быть значение, указанное до @, 
+--во второй колонке должно быть значение, указанное после @.
+
+select 
+	split_part(email, '@', 1) as email1,
+	split_part(email, '@', 2) as email2
+from 
+	customer
+
+
+--ЗАДАНИЕ №4
+--Доработайте запрос из предыдущего задания, скорректируйте значения в новых колонках: 
+--первая буква должна быть заглавной, остальные строчными.
+
+select 
+/* 	Так не совсем верно работает, т.к. '.' - тоже разделитель для initcap
+	initcap(split_part(email, '@', 1)) as email1,
+	initcap(split_part(email, '@', 2)) as email2
+*/
+	upper(substring(split_part(email, '@', 1) from 1 for 1))||substring(split_part(email, '@', 1) from 2) as email1,
+	upper(substring(split_part(email, '@', 2) from 1 for 1))||substring(split_part(email, '@', 2) from 2) as email2
+from 
+	customer;
+
