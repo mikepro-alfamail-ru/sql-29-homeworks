@@ -86,80 +86,46 @@ order by dt;
 -- 1. покупатель, арендовавший наибольшее количество фильмов
 -- 2. покупатель, арендовавший фильмов на самую большую сумму
 -- 3. покупатель, который последним арендовал фильм
-with count_rents as(
-select distinct 
-		c.customer_id,
-		c3.country,
-		count(r.rental_id) over (partition by (r.customer_id)) rent_count
-	from rental r
-	inner join customer c using(customer_id)
-	inner join address a using(address_id)
-	inner join city c2 using(city_id)
-	inner join country c3 using(country_id)
-),
-last_rents as(
-select distinct 
-		c.customer_id,
-		c3.country,
-		last_value(r.rental_id) over (order by r.customer_id) as last_rental
-	from rental r
-	inner join customer c using(customer_id)
-	inner join address a using(address_id)
-	inner join city c2 using(city_id)
-	inner join country c3 using(country_id)
-),
-sum_payment as(
-select distinct 
-		c.customer_id,
-		c3.country,
-		sum(p.amount) over (partition by (p.customer_id)) sum_payment
-	from payment p 
-	inner join customer c using(customer_id)
-	inner join address a using(address_id)
-	inner join city c2 using(city_id)
-	inner join country c3 using(country_id)
-),
-max_count as(
+with finally as (
+	with max_by_customer as(
+		select distinct
+			r.customer_id,
+			c2.country_id,
+			count(r.rental_id) over (partition by (r.customer_id)) max_rents,
+			sum(p.amount) over (partition by (p.customer_id)) pay_amount,
+			last_value(r.rental_id)  over (partition by (r.customer_id)) last_rent
+		from customer c 
+		inner join address a using(address_id)
+		inner join city c2 using(city_id)
+		inner join rental r on c.customer_id = r.customer_id 
+		right join payment p on p.customer_id = c.customer_id 
+	),
+	max_by_country as (
+		select
+			mrc.country_id,
+			max(mrc.max_rents) max_rent_count,
+			max(mrc.pay_amount) max_pay_amount,
+			max(mrc.last_rent) max_last_rent
+		from max_by_customer mrc
+		group by mrc.country_id
+	)
 	select distinct
-		country,
-		max(rent_count) max_rc
-	from count_rents
-	group by country
-),
-max_sum as(
-	select distinct
-		country,
-		max(sum_payment) max_sum
-	from sum_payment
-	group by country
-),
-last_rental as(
-	select distinct
-		country,
-		max(last_rental) max_lr
-	from last_rents
-	group by country
-),
-q1 as(select  
-	cr.country,
-	cr.customer_id max_rental_customer
-from max_count mc
-join count_rents cr on cr.country = mc.country and cr.rent_count = mc.max_rc
-),
-q2 as(select 
-	sm.country,
-	sm.customer_id max_paid_customer
-from sum_payment sm
-join max_sum ms on sm.country = ms.country and sm.sum_payment = ms.max_sum
-),
-q3 as(select 
-	lr.country,
-	lr.customer_id last_rental_customer
-from last_rents lr
-join last_rental lc on lr.country = lc.country and lr.last_rental = lc.max_lr
+		c3.country cnt,
+		array_agg(mc1.customer_id) ma, 
+		array_agg(mc2.customer_id) mp, 
+		array_agg(mc3.customer_id) la
+	from country c3 
+	join max_by_country mc0 on c3.country_id = mc0.country_id
+	join max_by_customer mc1 on mc0.country_id = mc1.country_id and mc0.max_rent_count = mc1.max_rents
+	join max_by_customer mc2 on mc0.country_id = mc1.country_id and mc0.max_pay_amount = mc2.pay_amount
+	join max_by_customer mc3 on mc0.country_id = mc1.country_id and mc0.max_last_rent = mc3.last_rent
+	group by c3.country
 )
-select * from q1
-join q2 using(country)
-join q3 using(country);
+select 
+	cnt "Страна",
+	array(select distinct * from unnest(ma)) "Макс аренд",
+	array(select distinct * from unnest(mp)) "Макс платеж",
+	array(select distinct * from unnest(la)) "Последняя аренда"
+from finally;
 
 ---УФФФФ!!!!
