@@ -75,7 +75,7 @@ order by p.payment_date, p.staff_id;
 --с сортировкой по дате продажи
 select distinct
 	p.staff_id, 
-	date_trunc('day', p.payment_date) dt,
+	to_char(date_trunc('day', p.payment_date), 'YYYY-MM-DD') dt,
 	sum(p.amount) over (partition by p.staff_id order by date_trunc('day', p.payment_date)) 
 from payment p 
 where date_trunc('month', p.payment_date) = '2007-03-01' 
