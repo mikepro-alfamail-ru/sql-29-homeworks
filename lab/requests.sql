@@ -64,7 +64,7 @@ order by 2 desc limit 5
 select 
 	vv.v,
 	count(vv.rental_id),
-	max(date_part('day'::text, r.return_date - r.rental_date) - f.rental_duration)
+	max(@(date_part('day'::text, r.return_date - r.rental_date) - f.rental_duration))
 from view_v vv 
 join rental r on r.rental_id = vv.rental_id 
 join inventory i on i.inventory_id = r.inventory_id 
