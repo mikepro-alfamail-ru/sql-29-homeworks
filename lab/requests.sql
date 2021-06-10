@@ -62,13 +62,16 @@ order by 2 desc limit 5
 --5. Сколько арендованных фильмов было возвращено в срок, до срока возврата и после, выведите максимальную разницу со сроком?
 
 select 
-	vv.v,
-	count(vv.rental_id),
+	CASE
+        WHEN f.rental_duration > date_part('day'::text, r.return_date - r.rental_date)::integer THEN 'заранее'::text
+        WHEN f.rental_duration = date_part('day'::text, r.return_date - r.rental_date)::integer THEN 'вовремя'::text
+        WHEN f.rental_duration < date_part('day'::text, r.return_date - r.rental_date)::integer THEN 'с опозданием'::text
+        ELSE null::text
+    END AS v,
+	count(r.rental_id),
 	max(@(date_part('day'::text, r.return_date - r.rental_date) - f.rental_duration))
-from view_v vv 
-join rental r on r.rental_id = vv.rental_id 
+from rental r 
 join inventory i on i.inventory_id = r.inventory_id 
 join film f on f.film_id = i.film_id 
-where vv.v is not null
 group by 1
-
+having max(@(date_part('day'::text, r.return_date - r.rental_date) - f.rental_duration)) is not null
